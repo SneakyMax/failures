@@ -103,7 +103,7 @@ function formatAssertionError (line, extraIndent) {
     return formatAssertionErrorLinting(line, extraIndent);
   }
 
-  throw new Error('Unknown diagnostic output: ' + JSON.stringify(line.diagnostic));
+  return '';
 }
 
 function formatAssertionErrorUnitTesting (line, extraIndent) {
