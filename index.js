@@ -99,8 +99,12 @@ function formatAssertionError (line, extraIndent) {
     return formatAssertionErrorUnitTesting(line, extraIndent);
   }
 
-  if (line.diagnostic.message && line.diagnostic.severity && line.diagnostic.file) {
-    return formatAssertionErrorLinting(line, extraIndent);
+  if (isEslintTap(line)) {
+    return formatAssertionErrorLinting(eslintTapData(line), extraIndent);
+  }
+
+  if (isEslintBuiltInTapFormatter(line)) {
+    return formatAssertionErrorLinting(eslintBuiltInTapFormatterData(line), extraIndent);
   }
 
   return '';
@@ -123,12 +127,37 @@ function formatAssertionErrorUnitTesting (line, extraIndent) {
     .join('\n')
 }
 
-function formatAssertionErrorLinting (line, extraIndent) {
+function isEslintTap (line) { return line.diagnostic.message && line.diagnostic.severity && line.diagnostic.file; }
+function isEslintBuiltInTapFormatter (line) { return line.diagnostic.data && line.diagnostic.data.ruleId; }
+
+function eslintTapData (line) {
+  return {
+    line: line.diagnostic.line,
+    file: line.diagnostic.file,
+    message: line.diagnostic.message,
+    name: line.diagnostic.name,
+    severity: line.diagnostic.severity
+  };
+}
+
+function eslintBuiltInTapFormatterData (line) {
+  return {
+    line: line.diagnostic.data.line,
+    file: line.title,
+    name: line.diagnostic.data.ruleId,
+    severity: line.diagnostic.severity,
+    message: line.diagnostic.message
+  };
+}
+
+function formatAssertionErrorLinting (data, extraIndent) {
   var output = [];
 
-  output.push(indent(format.red.bold(figures.cross + ' ' + line.diagnostic.message) + format.red('  (' + line.diagnostic.name + ')')))
-  output.push(indent(format.dim('  in ') + format.dim(line.diagnostic.file)))
-  output.push(indent(format.dim('  on line ') + format.bold(line.diagnostic.line)))
+  var color = data.severity === 'warn' ? format.yellow : format.red;
+
+  output.push(indent(color.bold(figures.cross + ' ' + data.message) + color('  (' + data.name + ')')))
+  output.push(indent(format.dim('  in ') + format.dim(data.file)))
+  output.push(indent(format.dim('  on line ') + format.bold(data.line)))
   output.push('');
 
   return output
